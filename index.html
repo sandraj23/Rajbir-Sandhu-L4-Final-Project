@@ -15,9 +15,15 @@
     <main>
         <div class="container input-group input-group-lg">
             <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-lg" id="search">
+            <button type = "button" id="submit" class="btn btn-primary">Search</button>
         </div> 
+
+        <div class="row g-5" id="results">
+
+        </div>
     </main>
     <script>
+        let results = document.querySelector('#results');
         //https://api.edamam.com/api/recipes/v2?type=public&q=chicken&app_id=61b46a46&app_key=23e4bbf4b4d63e3d0ed5c470bdc1e3c1
         const appID = "61b46a46";
         const apiKey = "23e4bbf4b4d63e3d0ed5c470bdc1e3c1";
@@ -29,20 +35,43 @@
             try {
                 let search = document.querySelector('#search').value;
                 let url = `${recipeApi}?type=public&q=${encodeURIComponent(search)}&app_id=${appID}&app_key=${apiKey}`;
-                console.log("Request URL:", url);
                 let response = await fetch(url);
                 let data = await response.json();
                 console.log(data);
-                return response;
+                return data;
             } catch (error) {
                 console.error(error);
             }
         }
-        document.querySelector('#search').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        fetchRecipe();
+        async function showRecipe() {
+            results.innerHTML = "";
+            let recipeData = await fetchRecipe();
+            for (let hit of recipeData.hits) {
+
+            let ingredientsList = '<ul>';
+            for (let ingredient of hit.recipe.ingredients) {
+                ingredientsList += `<li>${ingredient.text}</li>`;
+            }
+            ingredientsList += '</ul>'; 
+
+            let recipeMarkUp = `
+                <div class="col-lg-4">
+                    <div class="card">
+                        <img class="card-img-top" src="${hit.recipe.image}">
+                        <div class="card-body">
+                            <h2 class="card-title">${hit.recipe.label}</h2>
+                            <p class="card-text capitalize">Cuisine: ${hit.recipe.cuisineType}</p>
+                            <p class="card-text">Ingredients: </br></p>
+                            ${ingredientsList}
+                            <p class="card-text">Calories: ${Math.round(hit.recipe.calories)}</p>
+                            <a href="${hit.recipe.url}" class="btn-link"><button class="btn btn-outline-primary">Read More</button></a>
+                        </div>
+                    </div>
+                </div>`
+            results.innerHTML += recipeMarkUp;
+            }  
         }
-    });
+        document.querySelector('#submit').addEventListener('click', showRecipe);
     </script>
 </body>
 </html>
